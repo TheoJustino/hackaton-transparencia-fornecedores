@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$nomeBanco = "NOME_DO_BANCO"; // FALTA O NOME DO BANCO
+$nomeBanco = "hackaton-transparencia-fornecedores"; 
 $usuario = 'root';
 $senha = '';
 try{
