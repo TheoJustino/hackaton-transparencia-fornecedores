@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../config/conexao.php';
+require_once __DIR__ . '/../funcoes/esg.php';
 
 $fornecedorId = $_GET['id'] ?? null;
 if (!$fornecedorId) {
@@ -42,6 +43,13 @@ if ($resposta !== false) {
 $statusCar = $fornecedor['car'] ? 'PENDENTE' : 'NAO_SE_APLICA';
 $statusAmbiental = 'PENDENTE';
 $statusTrabalhista = 'PENDENTE';
+
+$resultadoGeral = calcularResultadoGeral(
+    $statusCnpj,
+    $statusCar,
+    $statusAmbiental,
+    $statusTrabalhista
+);
 
 if ($statusCnpj === 'IRREGULAR') {
     $resultadoGeral = 'IRREGULAR';
