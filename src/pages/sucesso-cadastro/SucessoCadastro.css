@@ -1,0 +1,174 @@
+.success-toast {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #22c55e;
+    border-radius: 8px;
+    background: #dcfce7;
+    color: #166534;
+    font-size: 14px;
+}
+
+.success-toast>img {
+    width: 20px;
+    height: 20px;
+}
+
+.success-toast>strong {
+    flex: 1;
+    font-weight: 600;
+}
+
+.success-actions {
+    display: flex;
+    gap: 16px;
+}
+
+.success-actions button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #0f766e;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.success-actions button:hover {
+    color: #115e59;
+}
+
+.success-breadcrumb {
+    color: #475569;
+    font-size: 14px;
+}
+
+.success-breadcrumb span {
+    margin: 0 5px;
+}
+
+.success-card {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding: 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.success-section h2 {
+    margin: 0 0 16px;
+    color: #0f172a;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.success-fields {
+    display: grid;
+    gap: 16px;
+}
+
+.success-fields-company {
+    grid-template-columns: minmax(0, 1.42fr) minmax(180px, 1fr) minmax(200px, 1fr);
+}
+
+.success-fields-location {
+    grid-template-columns: minmax(0, 3.12fr) minmax(145px, 1fr) minmax(145px, 1fr);
+    row-gap: 16px;
+}
+
+.success-fields>div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.success-fields span,
+.success-label {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.success-fields strong {
+    min-height: 40px;
+    padding: 11px 12px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #0f172a;
+    font-size: 14px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.success-field-wide {
+    grid-column: 1 / -1;
+}
+
+.success-classification {
+    padding-top: 0;
+}
+
+.success-label {
+    display: block;
+    margin-bottom: 12px;
+}
+
+.success-type {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.selected-dot {
+    width: 14px;
+    height: 14px;
+    border: 4px solid #0d9488;
+    border-radius: 50%;
+}
+
+@media (max-width: 720px) {
+    .success-toast {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .success-toast>strong {
+        flex-basis: calc(100% - 32px);
+    }
+
+    .success-actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 8px;
+        padding-left: 32px;
+    }
+
+    .success-actions button {
+        text-align: left;
+    }
+
+    .success-card {
+        padding: 22px;
+    }
+
+    .success-fields-company,
+    .success-fields-location {
+        grid-template-columns: 1fr;
+    }
+
+    .success-field-wide {
+        grid-column: auto;
+    }
+}

@@ -1,0 +1,14 @@
+.inactivation-backdrop { position: fixed; z-index: 20; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 23, 42, .4); }
+.inactivation-modal { width: min(480px, 100%); padding: 32px; border-radius: 12px; background: #fff; box-shadow: 0 8px 12px rgba(0, 0, 0, .15); }
+.inactivation-content { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; }
+.inactivation-icon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: #fef3c7; }
+.inactivation-icon img { width: 20px; height: 20px; }
+.inactivation-content h2 { margin: 0 0 8px; color: #0f172a; font-family: inherit; font-size: 16px; font-weight: 700; }
+.inactivation-content p { margin: 0; color: #475569; font-size: 12px; line-height: 17px; }
+.inactivation-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+.inactivation-actions button { height: 37px; padding: 0 16px; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.inactivation-cancel { border: 1px solid #e2e8f0; background: #fff; color: #475569; }
+.inactivation-confirm { border: 1px solid #ef4444; background: #ef4444; color: #fff; }
+.inactivation-cancel:hover { background: #f8fafc; }
+.inactivation-confirm:hover { background: #dc2626; }
+@media (max-width: 560px) { .inactivation-modal { padding: 22px; }.inactivation-actions { flex-direction: column-reverse; }.inactivation-actions button { width: 100%; } }

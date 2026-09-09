@@ -1,5 +1,10 @@
 import { useMemo, useState } from 'react'
 import FornecedorTable from './FornecedorTable'
+import NovoFornecedor from '../novo-fornecedor/NovoFornecedor'
+import SucessoCadastro from '../sucesso-cadastro/SucessoCadastro'
+import DetalhesFornecedor from '../detalhes-fornecedor/DetalhesFornecedor'
+import ModalEditar from '../modal-editar/ModalEditar'
+import ConfirmacaoInativacao from '../confirmacao-inativacao/ConfirmacaoInativacao'
 import './App.css'
 
 const imgLeaf = 'https://www.figma.com/api/mcp/asset/16f9db94-d8cb-4299-846e-c38b20509dd7.svg'
@@ -21,31 +26,66 @@ const fornecedoresMock = [
 
 function App() {
   const [termoBusca, setTermoBusca] = useState('')
+  const [fornecedores, setFornecedores] = useState(fornecedoresMock)
+  const [telaAtual, setTelaAtual] = useState('lista')
+  const [fornecedorCadastrado, setFornecedorCadastrado] = useState(null)
+  const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null)
+  const [modalEditarAberto, setModalEditarAberto] = useState(false)
+  const [fornecedorParaInativar, setFornecedorParaInativar] = useState(null)
 
   const fornecedoresFiltrados = useMemo(() => {
     const termo = termoBusca.trim().toLowerCase()
-    if (!termo) return fornecedoresMock
+    const fornecedoresAtivos = fornecedores.filter((fornecedor) => fornecedor.status === 'Ativo')
+    if (!termo) return fornecedoresAtivos
 
-    return fornecedoresMock.filter((fornecedor) =>
+    return fornecedoresAtivos.filter((fornecedor) =>
       fornecedor.nome.toLowerCase().includes(termo) || fornecedor.cnpj.includes(termo),
     )
-  }, [termoBusca])
+  }, [fornecedores, termoBusca])
 
   const handleVisualizar = (fornecedor) => {
-    const fornecedorSelecionado = fornecedor
+    setFornecedorSelecionado(fornecedor)
+    setTelaAtual('detalhes')
 
-    console.log('Fornecedor selecionado para visualização:', {
-      id: fornecedorSelecionado.id,
-      fornecedor: fornecedorSelecionado,
-    })
+    console.log('Fornecedor selecionado para visualização:', { id: fornecedor.id, fornecedor })
   }
-  const handleEditar = (fornecedor) => console.log('Editar fornecedor:', fornecedor)
-  const handleInativar = (fornecedor) => console.log('Inativar fornecedor:', fornecedor)
+  const handleEditar = (fornecedor) => {
+    setFornecedorSelecionado(fornecedor)
+    setModalEditarAberto(true)
+  }
+  const handleInativar = (fornecedor) => {
+    if (fornecedor.status === 'Inativo') return
+
+    setFornecedorParaInativar(fornecedor)
+  }
+
+  const handleConfirmarInativacao = () => {
+    if (!fornecedorParaInativar) return
+
+    const fornecedorInativado = { ...fornecedorParaInativar, status: 'Inativo' }
+    setFornecedores((fornecedoresAtuais) => fornecedoresAtuais.map((fornecedorAtual) => (
+      fornecedorAtual.id === fornecedorParaInativar.id ? fornecedorInativado : fornecedorAtual
+    )))
+
+    if (fornecedorSelecionado?.id === fornecedorParaInativar.id) {
+      setFornecedorSelecionado(fornecedorInativado)
+    }
+
+    setFornecedorParaInativar(null)
+  }
+
+  const handleSalvarEdicao = (fornecedorAtualizado) => {
+    setFornecedores((fornecedoresAtuais) => fornecedoresAtuais.map((fornecedor) => (
+      fornecedor.id === fornecedorAtualizado.id ? fornecedorAtualizado : fornecedor
+    )))
+    setFornecedorSelecionado(fornecedorAtualizado)
+    setModalEditarAberto(false)
+  }
 
   const handleExportar = () => {
     const colunas = ['Nome/Razão Social', 'CNPJ', 'CAR', 'Tipo', 'Status', 'Município']
     const escaparCampo = (valor) => `"${String(valor ?? '').replaceAll('"', '""')}"`
-    const linhas = fornecedoresMock.map((fornecedor) => [
+    const linhas = fornecedores.map((fornecedor) => [
       fornecedor.nome,
       fornecedor.cnpj,
       fornecedor.car,
@@ -66,6 +106,14 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  const handleSalvarFornecedor = (novoFornecedor) => {
+    setFornecedores((fornecedoresAtuais) => [...fornecedoresAtuais, novoFornecedor])
+    setFornecedorCadastrado(novoFornecedor)
+    setTelaAtual('sucesso')
+  }
+
+  const handleCancelarCadastro = () => setTelaAtual('lista')
+
   return (
     <main className="page-shell">
       <aside className="sidebar">
@@ -83,21 +131,37 @@ function App() {
       </aside>
 
       <section className="content-area" aria-labelledby="page-title">
-        <div className="title-row">
-          <div><h1 id="page-title">Fornecedores</h1><p className="page-description">{fornecedoresMock.length} fornecedores cadastrados</p></div>
-          <button type="button" className="primary-button" onClick={() => console.log('Novo fornecedor')}><img src={imgPlus} alt="" />Novo Fornecedor</button>
-        </div>
+        {telaAtual === 'novo' ? (
+          <NovoFornecedor onSalvar={handleSalvarFornecedor} onCancelar={handleCancelarCadastro} />
+        ) : telaAtual === 'sucesso' ? (
+          <SucessoCadastro fornecedor={fornecedorCadastrado} onCadastrarOutro={() => setTelaAtual('novo')} onVerLista={() => setTelaAtual('lista')} />
+        ) : telaAtual === 'detalhes' && fornecedorSelecionado ? (
+          <DetalhesFornecedor fornecedor={fornecedorSelecionado} onVoltar={() => setTelaAtual('lista')} onEditar={handleEditar} onInativar={handleInativar} />
+        ) : (
+          <>
+            <div className="title-row">
+              <div><h1 id="page-title">Fornecedores</h1><p className="page-description">{fornecedores.length} fornecedores cadastrados</p></div>
+              <button type="button" className="primary-button" onClick={() => setTelaAtual('novo')}><img src={imgPlus} alt="" />Novo Fornecedor</button>
+            </div>
 
-        <div className="list-toolbar">
-          <label className="search-field"><img src={imgSearch} alt="" /><span className="sr-only">Buscar por nome ou CNPJ...</span><input type="search" value={termoBusca} onChange={(event) => setTermoBusca(event.target.value)} placeholder="Buscar por nome ou CNPJ..." /></label>
-          <button type="button" className="secondary-button" onClick={handleExportar}>Exportar CSV</button>
-        </div>
+            <div className="list-toolbar">
+              <label className="search-field"><img src={imgSearch} alt="" /><span className="sr-only">Buscar por nome ou CNPJ...</span><input type="search" value={termoBusca} onChange={(event) => setTermoBusca(event.target.value)} placeholder="Buscar por nome ou CNPJ..." /></label>
+              <button type="button" className="secondary-button" onClick={handleExportar}>Exportar CSV</button>
+            </div>
 
-        <div className="table-card">
-          <div className="table-card-header"><div><h2 className="sr-only">Fornecedores cadastrados</h2><p>{fornecedoresFiltrados.length} {fornecedoresFiltrados.length === 1 ? 'registro encontrado' : 'registros encontrados'}</p></div></div>
-          {fornecedoresFiltrados.length > 0 ? <FornecedorTable fornecedores={fornecedoresFiltrados} onVisualizar={handleVisualizar} onEditar={handleEditar} onInativar={handleInativar} /> : <div className="empty-state"><strong>Nenhum fornecedor encontrado</strong><p>Revise o nome ou CNPJ informado na busca.</p></div>}
-        </div>
+            <div className="table-card">
+              <div className="table-card-header"><div><h2 className="sr-only">Fornecedores cadastrados</h2><p>{fornecedoresFiltrados.length} {fornecedoresFiltrados.length === 1 ? 'registro encontrado' : 'registros encontrados'}</p></div></div>
+              {fornecedoresFiltrados.length > 0 ? <FornecedorTable fornecedores={fornecedoresFiltrados} onVisualizar={handleVisualizar} onEditar={handleEditar} onInativar={handleInativar} /> : <div className="empty-state"><strong>Nenhum fornecedor encontrado</strong><p>Revise o nome ou CNPJ informado na busca.</p></div>}
+            </div>
+          </>
+        )}
       </section>
+      {modalEditarAberto && fornecedorSelecionado && (
+        <ModalEditar key={fornecedorSelecionado.id} fornecedor={fornecedorSelecionado} onClose={() => setModalEditarAberto(false)} onSave={handleSalvarEdicao} />
+      )}
+      {fornecedorParaInativar && (
+        <ConfirmacaoInativacao fornecedor={fornecedorParaInativar} onCancelar={() => setFornecedorParaInativar(null)} onConfirmar={handleConfirmarInativacao} />
+      )}
 
     </main>
   )
