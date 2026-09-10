@@ -2,8 +2,8 @@
 
 $host = 'localhost';
 $banco = 'compliance_fornecedores';
-$usuario = 'SEU_USUARIO';
-$senha = 'SUA_SENHA';
+$usuario = '';
+$senha = '';
 
 try {
     $pdo = new PDO(
