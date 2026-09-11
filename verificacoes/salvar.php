@@ -51,14 +51,6 @@ $resultadoGeral = calcularResultadoGeral(
     $statusTrabalhista
 );
 
-if ($statusCnpj === 'IRREGULAR') {
-    $resultadoGeral = 'IRREGULAR';
-} elseif ($statusCnpj === 'PENDENTE' || $statusCar === 'PENDENTE') {
-    $resultadoGeral = 'ATENCAO';
-} else {
-    $resultadoGeral = 'REGULAR';
-}
-
 $usuarioId = 1;
 
 // Módulo 9/11 - grava histórico da verificação
@@ -73,10 +65,10 @@ $stmtInsere->execute([
     $fornecedorId,
     $usuarioId,
     $statusCnpj,
-    'PENDENTE',
-    'PENDENTE',
-    'PENDENTE',
-    $statusCnpj === 'REGULAR' ? 'REGULAR' : 'IRREGULAR',
+    $statusCar,
+    $statusAmbiental,
+    $statusTrabalhista,
+    $resultadoGeral,
     'Verificação automática de CNPJ via BrasilAPI'
 ]);
 
@@ -91,15 +83,14 @@ $stmtAuditoria = $pdo->prepare('
 $stmtAuditoria->execute([
     $usuarioId,
     'VERIFICACAO_CNPJ',
-    'fornecedor',
+    'fornecedores',
     $fornecedorId,
     "CNPJ verificado via BrasilAPI, resultado: {$statusCnpj}"
 ]);
 
-// >>> BLOCO NOVO: atualiza o status_geral do fornecedor <<<
+// atualiza o status_geral do fornecedor
 $stmtAtualiza = $pdo->prepare('UPDATE fornecedores SET status_geral = ? WHERE id = ?');
 $stmtAtualiza->execute([$resultadoGeral, $fornecedorId]);
-// >>> FIM DO BLOCO NOVO <<<
 
 echo json_encode([
     'sucesso' => true,
