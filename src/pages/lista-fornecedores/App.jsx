@@ -5,6 +5,11 @@ import SucessoCadastro from '../sucesso-cadastro/SucessoCadastro'
 import DetalhesFornecedor from '../detalhes-fornecedor/DetalhesFornecedor'
 import ModalEditar from '../modal-editar/ModalEditar'
 import ConfirmacaoInativacao from '../confirmacao-inativacao/ConfirmacaoInativacao'
+import Dashboard from '../dashboard/Dashboard'
+import VerificacaoRiscos from '../verificacao-riscos/VerificacaoRiscos'
+import Login from '../login/Login'
+import Compliance from '../compliance/Compliance'
+import RelatorioPdf from '../relatorio-pdf/RelatorioPdf'
 import './App.css'
 
 const imgLeaf = 'https://www.figma.com/api/mcp/asset/16f9db94-d8cb-4299-846e-c38b20509dd7.svg'
@@ -24,7 +29,7 @@ const fornecedoresMock = [
   { id: 5, nome: 'Sementes Nova Safra Ltda.', cnpj: '56.789.012/0001-34', car: 'MT-5103304-6F5E.4D3C.2B1A.9G87', tipo: 'Fornecedor de insumos', status: 'Ativo', municipio: 'Lucas do Rio Verde' },
 ]
 
-function App() {
+function SistemaFornecedores() {
   const [termoBusca, setTermoBusca] = useState('')
   const [fornecedores, setFornecedores] = useState(fornecedoresMock)
   const [telaAtual, setTelaAtual] = useState('lista')
@@ -113,6 +118,17 @@ function App() {
   }
 
   const handleCancelarCadastro = () => setTelaAtual('lista')
+  const handleIrParaLista = () => setTelaAtual('lista')
+  const handleIrParaDashboard = () => setTelaAtual('dashboard')
+  const handleIrParaCompliance = () => setTelaAtual('compliance')
+  const handleIrParaRelatorios = () => {
+    setFornecedorSelecionado(fornecedores.find((fornecedor) => fornecedor.status === 'Ativo'))
+    setTelaAtual('relatorio')
+  }
+  const handleSelecionarFornecedorDashboard = (fornecedor) => {
+    setFornecedorSelecionado(fornecedor)
+    setTelaAtual('riscos')
+  }
 
   return (
     <main className="page-shell">
@@ -122,16 +138,24 @@ function App() {
           <div><p className="brand-name">GestãoFornecedores</p><p className="brand-subtitle">FRIGORÍFICO PORTAL</p></div>
         </div>
         <nav className="nav-list" aria-label="Navegação principal">
-          <a className="nav-item" href="#dashboard"><img src={imgLayoutDashboard} alt="" />Dashboard</a>
-          <a className="nav-item nav-item-active" href="#fornecedores"><img src={imgUsers2} alt="" />Fornecedores</a>
-          <a className="nav-item" href="#compliance"><img src={imgShieldAlert} alt="" />Compliance</a>
-          <a className="nav-item" href="#relatorios"><img src={imgBarChart} alt="" />Relatórios</a>
+          <a className={`nav-item ${telaAtual === 'dashboard' ? 'nav-item-active' : ''}`} href="#dashboard" onClick={(event) => { event.preventDefault(); handleIrParaDashboard() }}><img src={imgLayoutDashboard} alt="" />Dashboard</a>
+          <a className={`nav-item ${telaAtual !== 'dashboard' ? 'nav-item-active' : ''}`} href="#fornecedores" onClick={(event) => { event.preventDefault(); handleIrParaLista() }}><img src={imgUsers2} alt="" />Fornecedores</a>
+          <a className={`nav-item ${telaAtual === 'compliance' || telaAtual === 'riscos' ? 'nav-item-active' : ''}`} href="#compliance" onClick={(event) => { event.preventDefault(); handleIrParaCompliance() }}><img src={imgShieldAlert} alt="" />Compliance</a>
+          <a className={`nav-item ${telaAtual === 'relatorio' ? 'nav-item-active' : ''}`} href="#relatorios" onClick={(event) => { event.preventDefault(); handleIrParaRelatorios() }}><img src={imgBarChart} alt="" />Relatórios</a>
           <a className="nav-item" href="#configuracoes"><img src={imgSettings} alt="" />Configurações</a>
         </nav>
       </aside>
 
       <section className="content-area" aria-labelledby="page-title">
-        {telaAtual === 'novo' ? (
+        {telaAtual === 'dashboard' ? (
+          <Dashboard onSelecionarFornecedor={handleSelecionarFornecedorDashboard} />
+        ) : telaAtual === 'compliance' ? (
+          <Compliance fornecedores={fornecedores.filter((fornecedor) => fornecedor.status === 'Ativo')} onSelecionarFornecedor={handleSelecionarFornecedorDashboard} />
+        ) : telaAtual === 'riscos' && fornecedorSelecionado ? (
+          <VerificacaoRiscos fornecedor={fornecedorSelecionado} onVoltar={handleIrParaDashboard} onRelatorio={() => setTelaAtual('relatorio')} />
+        ) : telaAtual === 'relatorio' && fornecedorSelecionado ? (
+          <RelatorioPdf fornecedores={fornecedores.filter((fornecedor) => fornecedor.status === 'Ativo')} fornecedorSelecionado={fornecedorSelecionado} onSelecionarFornecedor={setFornecedorSelecionado} onVoltar={handleIrParaDashboard} />
+        ) : telaAtual === 'novo' ? (
           <NovoFornecedor onSalvar={handleSalvarFornecedor} onCancelar={handleCancelarCadastro} />
         ) : telaAtual === 'sucesso' ? (
           <SucessoCadastro fornecedor={fornecedorCadastrado} onCadastrarOutro={() => setTelaAtual('novo')} onVerLista={() => setTelaAtual('lista')} />
@@ -167,4 +191,12 @@ function App() {
   )
 }
 
-export default App 
+function App() {
+  const [autenticado, setAutenticado] = useState(false)
+
+  if (!autenticado) return <Login onLogin={() => setAutenticado(true)} />
+
+  return <SistemaFornecedores />
+}
+
+export default App
