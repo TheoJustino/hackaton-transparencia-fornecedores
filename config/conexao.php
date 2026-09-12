@@ -1,6 +1,6 @@
 <?php
 $host = 'localhost';
-$nomeBanco = "hackaton-transparencia-fornecedores"; 
+$nomeBanco = "projetodesegunda"; 
 $usuario = 'root';
 $senha = '';
 try{
@@ -10,14 +10,9 @@ try{
         $senha,
     
         [
-            /*
-            '::' => ACESSAR PERTENCENTE A UMA CLASSE "PDO"
-            '=>' OPERADOR ASSOCIANDO CHAVE A UM VALOR DENTRO DE UMA ARRAY
-
-            */
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, // EXIBE ERRO COMO EXCEÇÕES
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC, // RETORNA NOME DAS COLUNAS
-            PDO::ATTR_EMULATE_PREPARES => false //
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false
         ]
     );
     
