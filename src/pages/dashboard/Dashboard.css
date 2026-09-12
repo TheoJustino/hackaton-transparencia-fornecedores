@@ -32,6 +32,6 @@
 .risk-list li strong { overflow: hidden; color: #0f172a; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
 .risk-tag, .compliance-status { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .risk-ambiental { background: #dcfce7; color: #166534; }.risk-trabalhista { background: #fef3c7; color: #92400e; }.risk-sanitario { background: #dbeafe; color: #1d4ed8; }
-.status-regular { background: #dcfce7; color: #166534; }.status-atencao { background: #fef3c7; color: #92400e; }.status-irregular { background: #fee2e2; color: #991b1b; }
+.status-regular { background: #dcfce7; color: #166534; }.status-atencao { background: #fef3c7; color: #92400e; }.status-irregular { background: #fee2e2; color: #991b1b; }.status-nao-verificado { background: #f1f5f9; color: #64748b; }
 @media (max-width: 850px) { .dashboard-header { flex-direction: column; }.dashboard-filter { width: 100%; }.dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }.gravity-layout { gap: 32px; } }
 @media (max-width: 560px) { .dashboard-stats { grid-template-columns: 1fr; }.gravity-layout { flex-direction: column; gap: 28px; }.dashboard-legend { width: 100%; }.risk-list li { align-items: flex-start; flex-direction: column; }.dashboard-supplier-button { align-items: flex-start; flex-direction: column; } }

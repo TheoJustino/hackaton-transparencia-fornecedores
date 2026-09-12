@@ -1,10 +1,34 @@
+import { useEffect, useState } from 'react'
 import StatusBadge from '../lista-fornecedores/StatusBadge'
+import { apiRequest } from '../../config/api'
 import './DetalhesFornecedor.css'
 
 const imgLeaf = 'https://www.figma.com/api/mcp/asset/2edaf505-bb37-4db4-9af4-154a6f0fc7c8.svg'
 const imgEdit = 'https://www.figma.com/api/mcp/asset/9a8f174c-ede4-4731-8f32-559975d6f705.svg'
 
 function DetalhesFornecedor({ fornecedor, onVoltar, onEditar, onInativar }) {
+  const [historico, setHistorico] = useState([])
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+
+  useEffect(() => {
+    let cancelado = false
+    if (!fornecedor?.id) return
+
+    setCarregandoHistorico(true)
+    apiRequest(`fornecedores/consultar.php?id=${fornecedor.id}`)
+      .then((res) => {
+        if (!cancelado && res.sucesso && Array.isArray(res.historico)) {
+          setHistorico(res.historico)
+        }
+      })
+      .catch((err) => console.error('Erro ao buscar histórico:', err))
+      .finally(() => {
+        if (!cancelado) setCarregandoHistorico(false)
+      })
+
+    return () => { cancelado = true }
+  }, [fornecedor?.id])
+
   const enderecoCompleto = fornecedor.endereco
     ? [fornecedor.endereco, fornecedor.municipio, fornecedor.estado, fornecedor.cep && `CEP: ${fornecedor.cep}`].filter(Boolean).join(', ')
     : 'Não informado'
@@ -36,17 +60,34 @@ function DetalhesFornecedor({ fornecedor, onVoltar, onEditar, onInativar }) {
             <div><dt>Nome da Empresa</dt><dd>{fornecedor.nome}</dd></div>
             <div><dt>CNPJ</dt><dd>{fornecedor.cnpj}</dd></div>
             <div><dt>CAR</dt><dd>{fornecedor.car}</dd></div>
-            <div><dt>Tipo</dt><dd>{fornecedor.tipo === 'Transportadora' ? 'Transportador' : 'Produtor'}</dd></div>
-            <div><dt>Endereço</dt><dd>{enderecoCompleto || 'Não informado'}</dd></div>
+            <div><dt>Tipo</dt><dd>{fornecedor.tipo === 'Transportadora' || fornecedor.tipo === 'TRANSPORTADOR' ? 'Transportador' : 'Produtor rural'}</dd></div>
+            <div><dt>Produto / Serviço</dt><dd>{fornecedor.produto_servico || 'Não informado'}</dd></div>
+            <div><dt>Localização</dt><dd>{(fornecedor.cidade || fornecedor.municipio) ? `${fornecedor.cidade || fornecedor.municipio} - ${fornecedor.uf || fornecedor.estado}` : enderecoCompleto}</dd></div>
+            <div><dt>Status Compliance</dt><dd>{fornecedor.status_geral || 'Não verificado'}</dd></div>
           </dl>
         </section>
 
         <section className="details-panel" aria-labelledby="history-title">
-          <h2 id="history-title">Histórico de Alterações</h2>
+          <h2 id="history-title">Histórico de Auditoria</h2>
           <div className="history-table-wrapper">
             <table className="history-table">
-              <thead><tr><th>Data</th><th>Campo</th><th>Valor Anterior</th><th>Valor Novo</th></tr></thead>
-              <tbody><tr><td colSpan="4" className="history-empty">Nenhuma alteração registrada</td></tr></tbody>
+              <thead><tr><th>Data</th><th>Ação</th><th>Detalhes</th><th>Usuário</th></tr></thead>
+              <tbody>
+                {carregandoHistorico ? (
+                  <tr><td colSpan="4" className="history-empty">Carregando histórico...</td></tr>
+                ) : historico.length === 0 ? (
+                  <tr><td colSpan="4" className="history-empty">Nenhuma alteração registrada</td></tr>
+                ) : (
+                  historico.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.criado_em ? new Date(item.criado_em).toLocaleString('pt-BR') : '-'}</td>
+                      <td><strong>{item.acao}</strong></td>
+                      <td>{item.detalhes || '-'}</td>
+                      <td>{item.usuario_nome || 'Sistema'}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
             </table>
           </div>
         </section>

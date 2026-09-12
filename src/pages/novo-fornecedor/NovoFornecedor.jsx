@@ -5,6 +5,7 @@ const formularioInicial = {
   nome: '',
   cnpj: '',
   car: '',
+  produto_servico: '',
   endereco: '',
   municipio: '',
   estado: '',
@@ -37,10 +38,10 @@ const validarFormulario = (formulario) => {
 
   if (!formulario.nome.trim()) erros.nome = 'Campo obrigatório'
   if (!validarCnpj(formulario.cnpj)) erros.cnpj = 'CNPJ inválido. Verifique o formato e os dígitos.'
+  if (!formulario.produto_servico.trim()) erros.produto_servico = 'Campo obrigatório'
   if (formulario.car && !/^[A-Z]{2}-\d{7}-[A-Z0-9.]{4,}$/.test(formulario.car.trim().toUpperCase())) {
     erros.car = 'CAR inválido. Informe UF-0000000-XXXXXXXX.'
   }
-  if (!formulario.endereco.trim()) erros.endereco = 'Campo obrigatório'
   if (!formulario.municipio.trim()) erros.municipio = 'Campo obrigatório'
   if (!formulario.estado) erros.estado = 'Selecione um estado'
   if (formulario.cep && !/^\d{5}-?\d{3}$/.test(formulario.cep.trim())) erros.cep = 'CEP inválido.'
@@ -72,16 +73,18 @@ function NovoFornecedor({ onSalvar, onCancelar }) {
     }
 
     onSalvar({
-      id: Date.now(),
-      nome: formulario.nome,
-      cnpj: formulario.cnpj,
-      car: formulario.car || 'Não informado',
+      nome: formulario.nome.trim(),
+      cnpj: formulario.cnpj.trim(),
+      produto_servico: formulario.produto_servico.trim(),
+      car: formulario.car.trim() || 'Não informado',
       tipo: formulario.tipo,
       status: 'Ativo',
-      municipio: formulario.municipio,
-      endereco: formulario.endereco,
+      municipio: formulario.municipio.trim(),
+      cidade: formulario.municipio.trim(),
+      endereco: formulario.endereco.trim(),
       estado: formulario.estado,
-      cep: formulario.cep,
+      uf: formulario.estado,
+      cep: formulario.cep.trim(),
     })
     setFormulario(formularioInicial)
     setErros({})
@@ -113,6 +116,7 @@ function NovoFornecedor({ onSalvar, onCancelar }) {
           <div className="form-grid form-grid-company">
                   <label className="form-field form-field-company">Nome da Empresa <span>*</span><input name="nome" value={formulario.nome} onChange={handleChange} placeholder="Razão Social ou Nome Fantasia" {...obterPropsCampo('nome')} />{renderErro('nome')}</label>
                   <label className="form-field">CNPJ <span>*</span><input name="cnpj" value={formulario.cnpj} onChange={handleChange} placeholder="00.000.000/0000-00" {...obterPropsCampo('cnpj')} />{renderErro('cnpj')}</label>
+                  <label className="form-field">Produto / Serviço Principal <span>*</span><input name="produto_servico" value={formulario.produto_servico} onChange={handleChange} placeholder="Ex: Soja, Gado de corte, Frete..." {...obterPropsCampo('produto_servico')} />{renderErro('produto_servico')}</label>
                   <label className="form-field">CAR - Cadastro Ambiental Rural<input name="car" value={formulario.car} onChange={handleChange} placeholder="UF-0000000-XXXXXXXX" {...obterPropsCampo('car')} />{renderErro('car')}</label>
           </div>
         </fieldset>

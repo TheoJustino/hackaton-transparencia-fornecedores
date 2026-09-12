@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import FornecedorTable from './FornecedorTable'
 import NovoFornecedor from '../novo-fornecedor/NovoFornecedor'
 import SucessoCadastro from '../sucesso-cadastro/SucessoCadastro'
@@ -10,6 +10,7 @@ import VerificacaoRiscos from '../verificacao-riscos/VerificacaoRiscos'
 import Login from '../login/Login'
 import Compliance from '../compliance/Compliance'
 import RelatorioPdf from '../relatorio-pdf/RelatorioPdf'
+import { apiRequest } from '../../config/api'
 import './App.css'
 
 const imgLeaf = 'https://www.figma.com/api/mcp/asset/16f9db94-d8cb-4299-846e-c38b20509dd7.svg'
@@ -21,22 +22,52 @@ const imgSettings = 'https://www.figma.com/api/mcp/asset/2736992a-292f-4556-b390
 const imgPlus = 'https://www.figma.com/api/mcp/asset/df7827d0-5d3c-472b-91ab-e16f8daca91f.svg'
 const imgSearch = 'https://www.figma.com/api/mcp/asset/9f93776a-547d-476f-a617-5050cf83c4bd.svg'
 
-const fornecedoresMock = [
-  { id: 1, nome: 'Agropecuária Vale Verde Ltda.', cnpj: '12.345.678/0001-90', car: 'MT-5103403-7A1F.4C2B.8D9E.6F20', tipo: 'Produtor rural', status: 'Ativo', municipio: 'Cuiabá' },
-  { id: 2, nome: 'Fazenda Horizonte Novo', cnpj: '23.456.789/0001-01', car: 'MT-5107602-9B3E.7A10.5C4D.2F86', tipo: 'Produtor rural', status: 'Ativo', municipio: 'Sorriso' },
-  { id: 3, nome: 'Transportes Rota do Cerrado S.A.', cnpj: '34.567.890/0001-12', car: 'Não informado', tipo: 'Transportadora', status: 'Ativo', municipio: 'Rondonópolis' },
-  { id: 4, nome: 'Cooperativa Campo Forte', cnpj: '45.678.901/0001-23', car: 'MT-5108408-1D2C.3B4A.5E6F.7G80', tipo: 'Cooperativa', status: 'Inativo', municipio: 'Campo Verde' },
-  { id: 5, nome: 'Sementes Nova Safra Ltda.', cnpj: '56.789.012/0001-34', car: 'MT-5103304-6F5E.4D3C.2B1A.9G87', tipo: 'Fornecedor de insumos', status: 'Ativo', municipio: 'Lucas do Rio Verde' },
-]
+function normalizarFornecedor(f) {
+  return {
+    id: Number(f.id),
+    nome: f.nome || '',
+    cnpj: f.cnpj || '',
+    tipo: f.tipo === 'TRANSPORTADOR' ? 'Transportadora' : 'Produtor rural',
+    produto_servico: f.produto_servico || '',
+    car: f.car || 'Não informado',
+    municipio: f.cidade || '',
+    cidade: f.cidade || '',
+    estado: f.uf || '',
+    uf: f.uf || '',
+    status: Number(f.ativo) === 1 ? 'Ativo' : 'Inativo',
+    status_geral: f.status_geral || 'NAO_VERIFICADO',
+    ativo: Number(f.ativo) === 1,
+    criado_em: f.criado_em,
+    atualizado_em: f.atualizado_em,
+  }
+}
 
-function SistemaFornecedores() {
+function SistemaFornecedores({ usuario, onLogout }) {
   const [termoBusca, setTermoBusca] = useState('')
-  const [fornecedores, setFornecedores] = useState(fornecedoresMock)
+  const [fornecedores, setFornecedores] = useState([])
+  const [carregando, setCarregando] = useState(true)
   const [telaAtual, setTelaAtual] = useState('lista')
   const [fornecedorCadastrado, setFornecedorCadastrado] = useState(null)
   const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null)
   const [modalEditarAberto, setModalEditarAberto] = useState(false)
   const [fornecedorParaInativar, setFornecedorParaInativar] = useState(null)
+
+  const carregarFornecedores = useCallback(async () => {
+    try {
+      const res = await apiRequest('fornecedores/listar.php?incluir_inativos=1')
+      if (res.sucesso && Array.isArray(res.dados)) {
+        setFornecedores(res.dados.map(normalizarFornecedor))
+      }
+    } catch (erro) {
+      console.error('Erro ao carregar fornecedores:', erro)
+    } finally {
+      setCarregando(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    carregarFornecedores()
+  }, [carregarFornecedores])
 
   const fornecedoresFiltrados = useMemo(() => {
     const termo = termoBusca.trim().toLowerCase()
@@ -51,8 +82,6 @@ function SistemaFornecedores() {
   const handleVisualizar = (fornecedor) => {
     setFornecedorSelecionado(fornecedor)
     setTelaAtual('detalhes')
-
-    console.log('Fornecedor selecionado para visualização:', { id: fornecedor.id, fornecedor })
   }
   const handleEditar = (fornecedor) => {
     setFornecedorSelecionado(fornecedor)
@@ -64,31 +93,51 @@ function SistemaFornecedores() {
     setFornecedorParaInativar(fornecedor)
   }
 
-  const handleConfirmarInativacao = () => {
+  const handleConfirmarInativacao = async () => {
     if (!fornecedorParaInativar) return
 
-    const fornecedorInativado = { ...fornecedorParaInativar, status: 'Inativo' }
-    setFornecedores((fornecedoresAtuais) => fornecedoresAtuais.map((fornecedorAtual) => (
-      fornecedorAtual.id === fornecedorParaInativar.id ? fornecedorInativado : fornecedorAtual
-    )))
-
-    if (fornecedorSelecionado?.id === fornecedorParaInativar.id) {
-      setFornecedorSelecionado(fornecedorInativado)
+    try {
+      await apiRequest('fornecedores/inativar.php', {
+        method: 'POST',
+        body: JSON.stringify({ id: fornecedorParaInativar.id }),
+      })
+      await carregarFornecedores()
+      if (fornecedorSelecionado?.id === fornecedorParaInativar.id) {
+        setFornecedorSelecionado((prev) => (prev ? { ...prev, status: 'Inativo', ativo: false } : null))
+      }
+    } catch (erro) {
+      alert(erro.message || 'Erro ao inativar fornecedor.')
+    } finally {
+      setFornecedorParaInativar(null)
     }
-
-    setFornecedorParaInativar(null)
   }
 
-  const handleSalvarEdicao = (fornecedorAtualizado) => {
-    setFornecedores((fornecedoresAtuais) => fornecedoresAtuais.map((fornecedor) => (
-      fornecedor.id === fornecedorAtualizado.id ? fornecedorAtualizado : fornecedor
-    )))
-    setFornecedorSelecionado(fornecedorAtualizado)
-    setModalEditarAberto(false)
+  const handleSalvarEdicao = async (fornecedorAtualizado) => {
+    try {
+      const payload = {
+        id: fornecedorAtualizado.id,
+        nome: fornecedorAtualizado.nome,
+        cnpj: fornecedorAtualizado.cnpj,
+        tipo: fornecedorAtualizado.tipo === 'Transportadora' ? 'TRANSPORTADOR' : 'PRODUTOR',
+        produto_servico: fornecedorAtualizado.produto_servico,
+        car: fornecedorAtualizado.tipo === 'Transportadora' ? null : (fornecedorAtualizado.car === 'Não informado' ? null : fornecedorAtualizado.car),
+        cidade: fornecedorAtualizado.cidade || fornecedorAtualizado.municipio,
+        uf: fornecedorAtualizado.uf || fornecedorAtualizado.estado,
+      }
+      await apiRequest('fornecedores/atualizar.php', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      await carregarFornecedores()
+      setFornecedorSelecionado(fornecedorAtualizado)
+      setModalEditarAberto(false)
+    } catch (erro) {
+      alert(erro.message || 'Erro ao atualizar fornecedor.')
+    }
   }
 
   const handleExportar = () => {
-    const colunas = ['Nome/Razão Social', 'CNPJ', 'CAR', 'Tipo', 'Status', 'Município']
+    const colunas = ['Nome/Razão Social', 'CNPJ', 'CAR', 'Tipo', 'Status', 'Município', 'UF']
     const escaparCampo = (valor) => `"${String(valor ?? '').replaceAll('"', '""')}"`
     const linhas = fornecedores.map((fornecedor) => [
       fornecedor.nome,
@@ -96,7 +145,8 @@ function SistemaFornecedores() {
       fornecedor.car,
       fornecedor.tipo,
       fornecedor.status,
-      fornecedor.municipio,
+      fornecedor.cidade || fornecedor.municipio,
+      fornecedor.uf || fornecedor.estado,
     ].map(escaparCampo).join(','))
     const csv = `\uFEFF${colunas.map(escaparCampo).join(',')}\n${linhas.join('\n')}`
     const arquivo = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
@@ -111,10 +161,27 @@ function SistemaFornecedores() {
     URL.revokeObjectURL(url)
   }
 
-  const handleSalvarFornecedor = (novoFornecedor) => {
-    setFornecedores((fornecedoresAtuais) => [...fornecedoresAtuais, novoFornecedor])
-    setFornecedorCadastrado(novoFornecedor)
-    setTelaAtual('sucesso')
+  const handleSalvarFornecedor = async (dadosFormulario) => {
+    try {
+      const payload = {
+        nome: dadosFormulario.nome,
+        cnpj: dadosFormulario.cnpj,
+        tipo: dadosFormulario.tipo === 'Transportadora' ? 'TRANSPORTADOR' : 'PRODUTOR',
+        produto_servico: dadosFormulario.produto_servico,
+        car: dadosFormulario.tipo === 'Transportadora' ? null : (dadosFormulario.car === 'Não informado' ? null : dadosFormulario.car),
+        cidade: dadosFormulario.cidade || dadosFormulario.municipio,
+        uf: dadosFormulario.uf || dadosFormulario.estado,
+      }
+      const res = await apiRequest('fornecedores/cadastrar.php', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      })
+      await carregarFornecedores()
+      setFornecedorCadastrado({ ...dadosFormulario, id: res.id })
+      setTelaAtual('sucesso')
+    } catch (erro) {
+      alert(erro.message || 'Erro ao cadastrar fornecedor.')
+    }
   }
 
   const handleCancelarCadastro = () => setTelaAtual('lista')
@@ -122,12 +189,21 @@ function SistemaFornecedores() {
   const handleIrParaDashboard = () => setTelaAtual('dashboard')
   const handleIrParaCompliance = () => setTelaAtual('compliance')
   const handleIrParaRelatorios = () => {
-    setFornecedorSelecionado(fornecedores.find((fornecedor) => fornecedor.status === 'Ativo'))
+    const fornecedorAtivo = fornecedores.find((fornecedor) => fornecedor.status === 'Ativo') || fornecedores[0]
+    setFornecedorSelecionado(fornecedorAtivo)
     setTelaAtual('relatorio')
   }
   const handleSelecionarFornecedorDashboard = (fornecedor) => {
-    setFornecedorSelecionado(fornecedor)
+    const fornecedorCompleto = fornecedores.find((f) => Number(f.id) === Number(fornecedor.id)) || fornecedor
+    setFornecedorSelecionado(fornecedorCompleto)
     setTelaAtual('riscos')
+  }
+
+  const handleAtualizarStatusFornecedor = (fornecedorAtualizado) => {
+    setFornecedores((lista) =>
+      lista.map((f) => (Number(f.id) === Number(fornecedorAtualizado.id) ? { ...f, ...fornecedorAtualizado } : f))
+    )
+    setFornecedorSelecionado((prev) => (prev ? { ...prev, ...fornecedorAtualizado } : null))
   }
 
   return (
@@ -139,11 +215,12 @@ function SistemaFornecedores() {
         </div>
         <nav className="nav-list" aria-label="Navegação principal">
           <a className={`nav-item ${telaAtual === 'dashboard' ? 'nav-item-active' : ''}`} href="#dashboard" onClick={(event) => { event.preventDefault(); handleIrParaDashboard() }}><img src={imgLayoutDashboard} alt="" />Dashboard</a>
-          <a className={`nav-item ${telaAtual !== 'dashboard' ? 'nav-item-active' : ''}`} href="#fornecedores" onClick={(event) => { event.preventDefault(); handleIrParaLista() }}><img src={imgUsers2} alt="" />Fornecedores</a>
+          <a className={`nav-item ${telaAtual === 'lista' || telaAtual === 'novo' || telaAtual === 'sucesso' || telaAtual === 'detalhes' ? 'nav-item-active' : ''}`} href="#fornecedores" onClick={(event) => { event.preventDefault(); handleIrParaLista() }}><img src={imgUsers2} alt="" />Fornecedores</a>
           <a className={`nav-item ${telaAtual === 'compliance' || telaAtual === 'riscos' ? 'nav-item-active' : ''}`} href="#compliance" onClick={(event) => { event.preventDefault(); handleIrParaCompliance() }}><img src={imgShieldAlert} alt="" />Compliance</a>
           <a className={`nav-item ${telaAtual === 'relatorio' ? 'nav-item-active' : ''}`} href="#relatorios" onClick={(event) => { event.preventDefault(); handleIrParaRelatorios() }}><img src={imgBarChart} alt="" />Relatórios</a>
           <a className="nav-item" href="#configuracoes"><img src={imgSettings} alt="" />Configurações</a>
         </nav>
+        <div className="sidebar-session"><span>{usuario?.nome || usuario?.email}</span><button type="button" onClick={onLogout}>Sair</button></div>
       </aside>
 
       <section className="content-area" aria-labelledby="page-title">
@@ -152,7 +229,7 @@ function SistemaFornecedores() {
         ) : telaAtual === 'compliance' ? (
           <Compliance fornecedores={fornecedores.filter((fornecedor) => fornecedor.status === 'Ativo')} onSelecionarFornecedor={handleSelecionarFornecedorDashboard} />
         ) : telaAtual === 'riscos' && fornecedorSelecionado ? (
-          <VerificacaoRiscos fornecedor={fornecedorSelecionado} onVoltar={handleIrParaDashboard} onRelatorio={() => setTelaAtual('relatorio')} />
+          <VerificacaoRiscos fornecedor={fornecedorSelecionado} onVoltar={handleIrParaDashboard} onRelatorio={() => setTelaAtual('relatorio')} onAtualizarFornecedor={handleAtualizarStatusFornecedor} />
         ) : telaAtual === 'relatorio' && fornecedorSelecionado ? (
           <RelatorioPdf fornecedores={fornecedores.filter((fornecedor) => fornecedor.status === 'Ativo')} fornecedorSelecionado={fornecedorSelecionado} onSelecionarFornecedor={setFornecedorSelecionado} onVoltar={handleIrParaDashboard} />
         ) : telaAtual === 'novo' ? (
@@ -175,7 +252,13 @@ function SistemaFornecedores() {
 
             <div className="table-card">
               <div className="table-card-header"><div><h2 className="sr-only">Fornecedores cadastrados</h2><p>{fornecedoresFiltrados.length} {fornecedoresFiltrados.length === 1 ? 'registro encontrado' : 'registros encontrados'}</p></div></div>
-              {fornecedoresFiltrados.length > 0 ? <FornecedorTable fornecedores={fornecedoresFiltrados} onVisualizar={handleVisualizar} onEditar={handleEditar} onInativar={handleInativar} /> : <div className="empty-state"><strong>Nenhum fornecedor encontrado</strong><p>Revise o nome ou CNPJ informado na busca.</p></div>}
+              {carregando ? (
+                <p style={{ padding: '32px', textAlign: 'center', color: '#64748b' }}>Carregando fornecedores do banco de dados...</p>
+              ) : fornecedoresFiltrados.length > 0 ? (
+                <FornecedorTable fornecedores={fornecedoresFiltrados} onVisualizar={handleVisualizar} onEditar={handleEditar} onInativar={handleInativar} />
+              ) : (
+                <div className="empty-state"><strong>Nenhum fornecedor encontrado</strong><p>Cadastre um fornecedor ou revise os termos de busca.</p></div>
+              )}
             </div>
           </>
         )}
@@ -193,10 +276,48 @@ function SistemaFornecedores() {
 
 function App() {
   const [autenticado, setAutenticado] = useState(false)
+  const [usuario, setUsuario] = useState(null)
+  const [verificandoSessao, setVerificandoSessao] = useState(true)
 
-  if (!autenticado) return <Login onLogin={() => setAutenticado(true)} />
+  useEffect(() => {
+    apiRequest('auth/me.php')
+      .then((res) => {
+        if (res.sucesso && res.usuario) {
+          setUsuario(res.usuario)
+          setAutenticado(true)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        setVerificandoSessao(false)
+      })
+  }, [])
 
-  return <SistemaFornecedores />
+  const handleLogin = (usuarioAutenticado) => {
+    setUsuario(usuarioAutenticado)
+    setAutenticado(true)
+  }
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('auth/logout.php', { method: 'POST' })
+    } finally {
+      setUsuario(null)
+      setAutenticado(false)
+    }
+  }
+
+  if (verificandoSessao) {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100vh', background: '#f8fafc', color: '#64748b', fontFamily: 'sans-serif' }}>
+        <p>Carregando sessão...</p>
+      </div>
+    )
+  }
+
+  if (!autenticado) return <Login onLogin={handleLogin} />
+
+  return <SistemaFornecedores usuario={usuario} onLogout={handleLogout} />
 }
 
 export default App

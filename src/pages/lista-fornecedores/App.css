@@ -408,3 +408,8 @@ h1 {
     }
 
 }
+
+.sidebar-session { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+.sidebar-session span { overflow: hidden; color: #64748b; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-session button { align-self: flex-start; padding: 0; border: 0; background: transparent; color: #0f766e; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.sidebar-session button:hover { text-decoration: underline; }

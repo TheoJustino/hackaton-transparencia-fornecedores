@@ -5,6 +5,7 @@ const formularioInicial = {
   nome: '',
   cnpj: '',
   car: '',
+  produto_servico: '',
   endereco: '',
   municipio: '',
   estado: '',
@@ -61,6 +62,7 @@ function ModalEditar({ fornecedor, onClose, onSave }) {
 
     if (!formulario.nome.trim()) novosErros.nome = 'Campo obrigatório'
     if (!validarCnpj(formulario.cnpj)) novosErros.cnpj = 'CNPJ inválido. Verifique o formato e os dígitos.'
+    if (!formulario.produto_servico?.trim()) novosErros.produto_servico = 'Campo obrigatório'
 
     if (Object.keys(novosErros).length > 0) {
       setErros(novosErros)
@@ -72,7 +74,12 @@ function ModalEditar({ fornecedor, onClose, onSave }) {
       ...formulario,
       nome: formulario.nome.trim(),
       cnpj: formulario.cnpj.trim(),
-      car: formulario.car.trim() || 'Não informado',
+      produto_servico: formulario.produto_servico.trim(),
+      car: formulario.car?.trim() || 'Não informado',
+      municipio: (formulario.municipio || formulario.cidade || '').trim(),
+      cidade: (formulario.municipio || formulario.cidade || '').trim(),
+      estado: formulario.estado || formulario.uf || '',
+      uf: formulario.estado || formulario.uf || '',
     })
   }
 
@@ -95,6 +102,7 @@ function ModalEditar({ fornecedor, onClose, onSave }) {
         <form onSubmit={handleSubmit}>
           <div className="modal-form-fields">
             <label className="modal-field modal-field-full">Nome da Empresa <span>*</span><input name="nome" value={formulario.nome} onChange={handleChange} {...campoProps('nome')} />{renderErro('nome')}</label>
+            <label className="modal-field modal-field-full">Produto / Serviço Principal <span>*</span><input name="produto_servico" value={formulario.produto_servico || ''} onChange={handleChange} {...campoProps('produto_servico')} />{renderErro('produto_servico')}</label>
             <div className="modal-form-row">
               <label className="modal-field">CNPJ <span>*</span><input name="cnpj" value={formulario.cnpj} onChange={handleChange} {...campoProps('cnpj')} />{renderErro('cnpj')}</label>
               <label className="modal-field">CAR - Cadastro Ambiental Rural<input name="car" value={formulario.car} onChange={handleChange} {...campoProps('car')} /></label>
